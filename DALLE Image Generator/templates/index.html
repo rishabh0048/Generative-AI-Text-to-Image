@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Image Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 min-h-screen flex flex-col">
+
+  <!-- Hero -->
+  <header class="text-center text-white py-10">
+    <h1 class="text-5xl font-extrabold tracking-wide">✨ AI Image Generator</h1>
+    <p class="mt-3 text-lg opacity-80">Turn your imagination into reality with AI-powered art</p>
+  </header>
+
+  <!-- Main Card -->
+  <main class="flex-1 flex justify-center items-start">
+    <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-8 w-full max-w-3xl mx-4">
+
+      <!-- Form -->
+      <form id="imageForm" class="space-y-5">
+        <input type="text" name="prompt" placeholder="Describe your masterpiece..."
+          class="w-full p-4 rounded-xl bg-white/20 text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-400" required>
+
+        <div class="flex space-x-3">
+          <select name="size" class="w-1/2 p-3 rounded-xl bg-white/20 text-white border border-white/30">
+            <option>256x256</option>
+            <option>512x512</option>
+            <option selected>1024x1024</option>
+          </select>
+
+          <select name="n" class="w-1/2 p-3 rounded-xl bg-white/20 text-white border border-white/30">
+            <option value="1">1 image</option>
+            <option value="2">2 images</option>
+            <option value="3">3 images</option>
+            <option value="4">4 images</option>
+          </select>
+        </div>
+
+        <button type="submit"
+          class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white py-4 rounded-xl font-bold text-lg transition">
+          🎨 Generate Image
+        </button>
+      </form>
+
+      <!-- Loader -->
+      <div id="loading" class="hidden text-center mt-6">
+        <div class="w-12 h-12 border-4 border-t-transparent border-pink-400 rounded-full animate-spin mx-auto"></div>
+        <p class="text-white mt-3">Crafting your art... please wait</p>
+      </div>
+
+      <!-- Results -->
+      <div id="result" class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-gray-200 text-sm py-6">
+    Built with ❤️ using OpenAI & Flask
+  </footer>
+
+  <!-- Script -->
+  <script>
+    const form = document.getElementById("imageForm");
+    const resultDiv = document.getElementById("result");
+    const loading = document.getElementById("loading");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resultDiv.innerHTML = "";
+      loading.classList.remove("hidden");
+
+      const formData = new FormData(form);
+      try {
+        const res = await axios.post("/generate", formData);
+        loading.classList.add("hidden");
+
+        if (res.data.error) {
+          resultDiv.innerHTML = `<p class="text-red-400 text-center">❌ ${res.data.error}</p>`;
+          return;
+        }
+
+        res.data.urls.forEach(url => {
+          const card = `
+            <div class="bg-white/10 backdrop-blur-lg p-4 rounded-xl shadow-lg border border-white/20 text-center">
+              <img src="${url}" alt="Generated Image" class="rounded-lg mb-3 shadow-md hover:scale-105 transition">
+              <div class="flex justify-center space-x-3">
+                <a href="${url}" download class="px-3 py-1 bg-pink-500 text-white rounded-lg hover:bg-pink-600">⬇ Download</a>
+                <button onclick="navigator.clipboard.writeText('${url}')" class="px-3 py-1 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">📋 Copy URL</button>
+                <button onclick="window.open('${url}', '_blank')" class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">🔍 View</button>
+              </div>
+            </div>`;
+          resultDiv.innerHTML += card;
+        });
+      } catch (err) {
+        loading.classList.add("hidden");
+        resultDiv.innerHTML = `<p class="text-red-400 text-center">❌ Error generating image.</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
